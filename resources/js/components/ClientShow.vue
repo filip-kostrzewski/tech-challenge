@@ -30,59 +30,13 @@
             </div>
 
             <div class="w-2/3">
-                <div>
+                <div class="mb-4">
                     <button class="btn" :class="{'btn-primary': currentTab == 'bookings', 'btn-default': currentTab != 'bookings'}" @click="switchTab('bookings')">Bookings</button>
                     <button class="btn" :class="{'btn-primary': currentTab == 'journals', 'btn-default': currentTab != 'journals'}" @click="switchTab('journals')">Journals</button>
                 </div>
 
-                <!-- Bookings -->
-                <div class="bg-white rounded p-4" v-if="currentTab == 'bookings'">
-                    <div class="flex justify-content-between">
-                        <h3 class="mb-3">List of client bookings</h3>
-                        <div class="form-group ">
-                            <select v-model="bookingFilter" @change="bookingFilterChanged" class="form-control">
-                                <option value="">All bookings</option>
-                                <option value="upcoming">Future bookings only</option>
-                                <option value="past">Past bookings only</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <template v-if="client.bookings && client.bookings.length > 0">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Time</th>
-                                    <th>Notes</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="booking in client.bookings" :key="booking.id">
-                                    <td>
-                                        {{ booking.formatted_time_duration }}
-                                    </td>
-                                    <td>{{ booking.notes }}</td>
-                                    <td>
-                                        <button class="btn btn-danger btn-sm" @click="deleteBooking(booking)">Delete</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </template>
-
-                    <template v-else>
-                        <p class="text-center">The client has no bookings.</p>
-                    </template>
-
-                </div>
-
-                <!-- Journals -->
-                <div class="bg-white rounded p-4" v-if="currentTab == 'journals'">
-                    <h3 class="mb-3">List of client journals</h3>
-
-                    <p>(BONUS) TODO: implement this feature</p>
-                </div>
+                <BookingsTable v-if="currentTab === 'bookings'" :client="localClient" @delete="deleteBooking" />
+                <JournalsTable v-if="currentTab === 'journals'" :client="localClient" @delete="deleteJournal" />
             </div>
         </div>
     </div>
@@ -90,15 +44,22 @@
 
 <script>
 import axios from 'axios';
+import BookingsTable from './ClientShowBookingsTable.vue';
+import JournalsTable from './ClientShowJournalsTable.vue';
 
 export default {
     name: 'ClientShow',
+
+    components: {
+        BookingsTable, JournalsTable
+    },
 
     props: ['client'],
 
     data() {
         return {
             currentTab: 'bookings',
+            localClient: this.client,
             bookingFilter: new URLSearchParams(window.location.search).get('booking_filter') || ''
         }
     },
@@ -109,7 +70,17 @@ export default {
         },
 
         deleteBooking(booking) {
-            axios.delete(`/bookings/${booking.id}`);
+            axios.delete(`/clients/${this.client.id}/bookings/${booking}`)
+                .then(() => {
+                    this.localClient.bookings = this.localClient.bookings.filter(item => item.id !== booking);
+                });
+        },
+
+        deleteJournal(journal) {
+            axios.delete(`/clients/${this.client.id}/journals/${journal}`)
+                .then(() => {
+                    this.localClient.journals = this.localClient.journals.filter(item => item.id !== journal);
+                });
         },
 
         bookingFilterChanged() {
