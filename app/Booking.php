@@ -17,4 +17,13 @@ class Booking extends Model
         'start',
         'end',
     ];
+
+    protected $appends = [
+        'formatted_time_duration',
+    ];
+
+    public function getFormattedTimeDurationAttribute(): string
+    {
+        return $this->start->format('l d F Y H:i') . ' - ' . $this->end->format('H:i');
+    }
 }
