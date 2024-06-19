@@ -26,7 +26,9 @@ class ClientsController extends Controller
     public function show($client)
     {
         $client = auth()->user()->clients()
-            ->with('bookings:id,start,end,notes,client_id')
+            ->with(['bookings' => function ($query) {
+                $query->orderByDesc('start');
+            }])
             ->findOrFail($client);
 
         return view('clients.show', ['client' => $client]);
@@ -38,7 +40,7 @@ class ClientsController extends Controller
         $client->name = $request->get('name');
         $client->email = $request->get('email');
         $client->phone = $request->get('phone');
-        $client->adress = $request->get('adress');
+        $client->address = $request->get('address');
         $client->city = $request->get('city');
         $client->postcode = $request->get('postcode');
         $client->user_id = auth()->id();
