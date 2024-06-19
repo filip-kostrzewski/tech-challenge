@@ -23,11 +23,23 @@ class ClientsController extends Controller
         return view('clients.create');
     }
 
-    public function show($client)
+    public function show(Request $request, $client)
     {
+        $request->validate([
+            'booking_filter' => ['nullable', 'in:upcoming,past'],
+        ]);
+
         $client = auth()->user()->clients()
-            ->with(['bookings' => function ($query) {
+            ->with(['bookings' => function ($query) use ($request){
                 $query->orderByDesc('start');
+
+                if ($request->get('booking_filter') === 'upcoming') {
+                    $query->where('end', '>=', now());
+                }
+
+                if ($request->get('booking_filter') === 'past') {
+                    $query->where('start', '<', now());
+                }
             }])
             ->findOrFail($client);
 

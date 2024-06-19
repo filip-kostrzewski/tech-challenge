@@ -37,7 +37,16 @@
 
                 <!-- Bookings -->
                 <div class="bg-white rounded p-4" v-if="currentTab == 'bookings'">
-                    <h3 class="mb-3">List of client bookings</h3>
+                    <div class="flex justify-content-between">
+                        <h3 class="mb-3">List of client bookings</h3>
+                        <div class="form-group ">
+                            <select v-model="bookingFilter" @change="bookingFilterChanged" class="form-control">
+                                <option value="">All bookings</option>
+                                <option value="upcoming">Future bookings only</option>
+                                <option value="past">Past bookings only</option>
+                            </select>
+                        </div>
+                    </div>
 
                     <template v-if="client.bookings && client.bookings.length > 0">
                         <table>
@@ -90,6 +99,7 @@ export default {
     data() {
         return {
             currentTab: 'bookings',
+            bookingFilter: new URLSearchParams(window.location.search).get('booking_filter') || ''
         }
     },
 
@@ -100,6 +110,10 @@ export default {
 
         deleteBooking(booking) {
             axios.delete(`/bookings/${booking.id}`);
+        },
+
+        bookingFilterChanged() {
+            window.location.href = `/clients/${this.client.id}?booking_filter=${this.bookingFilter}`;
         }
     }
 }
