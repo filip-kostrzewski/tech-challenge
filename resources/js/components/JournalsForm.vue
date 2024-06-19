@@ -51,7 +51,7 @@ export default {
                     this.errors = error.response.data.errors;
                 })
                 .then((data) => {
-                    if(data?.status !== 200) return;
+                    if(data?.status !== 201) return;
                     window.location.href = this.client.url;
                 });
         }

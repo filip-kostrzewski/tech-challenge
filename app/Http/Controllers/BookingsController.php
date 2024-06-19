@@ -2,18 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Client;
-use App\Journal;
-use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class BookingsController extends Controller
 {
-    public function destroy($client, $booking)
+    public function destroy($client, $booking): Response
     {
         $booking = auth()->user()->clients()->findOrFail($client)->bookings()->findOrFail($booking);
 
         $booking->delete();
 
-        return 'Deleted';
+        return response('Deleted', 201);
     }
 }

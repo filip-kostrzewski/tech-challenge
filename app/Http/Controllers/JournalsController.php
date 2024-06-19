@@ -2,54 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Client;
 use App\Journal;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\View\View;
 
 class JournalsController extends Controller
 {
-    public function index()
-    {
-        $clients = auth()->user()->clients;
-
-        foreach ($clients as $client) {
-            $client->append('bookings_count');
-        }
-
-        return view('clients.index', ['clients' => $clients]);
-    }
-
-    public function create($client)
+    public function create($client): View
     {
         $client = auth()->user()->clients()->findOrFail($client);
 
         return view('journals.create', ['client' => $client]);
     }
 
-    public function show(Request $request, $client)
-    {
-        $request->validate([
-            'booking_filter' => ['nullable', 'in:upcoming,past'],
-        ]);
-
-        $client = auth()->user()->clients()
-            ->with(['bookings' => function ($query) use ($request){
-                $query->orderByDesc('start');
-
-                if ($request->get('booking_filter') === 'upcoming') {
-                    $query->where('end', '>=', now());
-                }
-
-                if ($request->get('booking_filter') === 'past') {
-                    $query->where('start', '<', now());
-                }
-            }])
-            ->findOrFail($client);
-
-        return view('clients.show', ['client' => $client]);
-    }
-
-    public function store($client, Request $request)
+    public function store($client, Request $request): Response
     {
         $request->validate([
             'date' => ['required', 'date'],
@@ -62,15 +29,15 @@ class JournalsController extends Controller
         $journal->client_id = $client;
         $journal->save();
 
-        return $journal->client->url;
+        return response($journal->client->url, 201);
     }
 
-    public function destroy($client, $journal)
+    public function destroy($client, $journal): Response
     {
         $journal = auth()->user()->clients()->findOrFail($client)->journals()->findOrFail($journal);
 
         $journal->delete();
 
-        return 'Deleted';
+        return response('Deleted', 201);
     }
 }

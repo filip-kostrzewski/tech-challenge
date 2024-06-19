@@ -21,11 +21,6 @@ class Client extends Model
         'url',
     ];
 
-    public function getBookingsCountAttribute(): int
-    {
-        return $this->bookings->count();
-    }
-
     public function getUrlAttribute(): string
     {
         return "/clients/" . $this->id;
@@ -33,11 +28,11 @@ class Client extends Model
 
     public function bookings(): HasMany
     {
-        return $this->hasMany(Booking::class);
+        return $this->hasMany(Booking::class)->orderByDesc('start');
     }
 
     public function journals(): HasMany
     {
-        return $this->hasMany(Journal::class);
+        return $this->hasMany(Journal::class)->orderByDesc('date');
     }
 }

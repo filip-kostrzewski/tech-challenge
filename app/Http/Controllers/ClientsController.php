@@ -4,52 +4,43 @@ namespace App\Http\Controllers;
 
 use App\Client;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\View\View;
 
 class ClientsController extends Controller
 {
-    public function index()
+    public function index(): View
     {
-        $clients = auth()->user()->clients;
-
-        foreach ($clients as $client) {
-            $client->append('bookings_count');
-        }
+        $clients = auth()->user()->clients()
+            ->withCount('bookings')
+            ->get();
 
         return view('clients.index', ['clients' => $clients]);
     }
 
-    public function create()
+    public function create(): View
     {
         return view('clients.create');
     }
 
-    public function show(Request $request, $client)
+    public function show(Request $request, $client): View
     {
         $request->validate([
             'booking_filter' => ['nullable', 'in:upcoming,past'],
         ]);
 
         $client = auth()->user()->clients()
-            ->with(['journals' => function ($query) {
-                $query->orderByDesc('date');
-            }])
+            ->with(['journals'])
             ->with(['bookings' => function ($query) use ($request){
-                $query->orderByDesc('start');
-
-                if ($request->get('booking_filter') === 'upcoming') {
-                    $query->where('end', '>=', now());
-                }
-
-                if ($request->get('booking_filter') === 'past') {
-                    $query->where('start', '<', now());
-                }
+                $request->get('booking_filter') === 'upcoming' && $query->upcoming();
+                $request->get('booking_filter') === 'past' && $query->past();
             }])
             ->findOrFail($client);
 
         return view('clients.show', ['client' => $client]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): Response
     {
         $request->validate([
             'name' => ['required', 'string', 'max:190'],
@@ -67,13 +58,13 @@ class ClientsController extends Controller
         $client->user_id = auth()->id();
         $client->save();
 
-        return $client;
+        return response($client, 201);
     }
 
-    public function destroy($client)
+    public function destroy($client): Response
     {
         auth()->user()->clients()->findOrFail($client)->delete();
 
-        return 'Deleted';
+        return response('Deleted', 201);
     }
 }
